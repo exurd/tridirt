@@ -5,7 +5,7 @@ A launcher for Python versions of TrID, the file identifier.
 Run `pip install git+https://github.com/exurd/tridirt` to install the program. It is highly recommended to use pipx.
 
 > [!TIP]
-> TrID supports stringzilla, which can be installed in tridirt with `pip install "git+https://github.com/exurd/tridirt[stringzilla]"`.
+> TrID supports stringzilla, which can be installed via pipx with `pipx install "git+https://github.com/exurd/tridirt.git#egg=tridirt[stringzilla]"`.
 
 To use TrID, run `trid`. The first time you run the program, tridirt will ask you to download and install the program. It will be installed at `$HOME/.trid`. Other related tools, like `tridscan` and `triddefspack`, will also ask you to download and install them.
 
