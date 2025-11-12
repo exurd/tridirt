@@ -8,26 +8,15 @@ from zipfile import ZipFile
 from tqdm import tqdm
 import requests
 
-
 HOME_DIR = Path.home()
 INSTALL_DIR = f"{HOME_DIR}/.trid"
-
-URL_TRID_PROGRAM = "https://mark0.net/download/trid.zip"
-URL_TRID_DEFS = "https://mark0.net/download/triddefs.zip"
-URL_TRIDSCAN = "https://mark0.net/download/tridscan.zip"
-URL_TRIDDEFSPACK = "https://mark0.net/download/triddefspack.zip"
-
-COMMAND_TRID = [sys.executable, f"{INSTALL_DIR}/trid.py"]
-COMMAND_TRIDSCAN = [sys.executable, f"{INSTALL_DIR}/tridscan.py"]
-COMMAND_TRIDDEFSPACK = [sys.executable, f"{INSTALL_DIR}/triddefspack.py"]
-
-DT_NOW = datetime.now()
-DT_FORMAT = "%m-%d-%Y %H:%M:%S"
-
 
 # create the install directory
 if not os.path.exists(INSTALL_DIR):
     os.makedirs(INSTALL_DIR)
+
+DT_NOW = datetime.now()
+DT_FORMAT = "%m-%d-%Y %H:%M:%S"
 
 
 def get_datetime(filename):
@@ -40,17 +29,36 @@ def get_datetime(filename):
     return dt
 
 
-FILE_TRID_LASTUPDATED = f"{INSTALL_DIR}/TRID_LU"
-DT_TRID_LASTUPDATED = get_datetime(FILE_TRID_LASTUPDATED)
+TRID_DICT = {
+    "name": "TrID",
+    "url": "https://mark0.net/download/trid.zip",
+    "command": [sys.executable, f"{INSTALL_DIR}/trid.py"],
+    "file_lastupdated": f"{INSTALL_DIR}/TRID_LU"
+}
+TRID_DICT["dt_lastupdated"] = get_datetime(TRID_DICT["file_lastupdated"])
 
-FILE_TRIDDEFS_LASTUPDATED = f"{INSTALL_DIR}/TRID_DEFS_LU"
-DT_TRIDDEFS_LASTUPDATED = get_datetime(FILE_TRIDDEFS_LASTUPDATED)
+TRIDDEFS_DICT = {
+    "name": "TrIDDefs",
+    "url": "https://mark0.net/download/triddefs.zip",
+    "file_lastupdated": f"{INSTALL_DIR}/TRIDDEFS_LU"
+}
+TRIDDEFS_DICT["dt_lastupdated"] = get_datetime(TRIDDEFS_DICT["file_lastupdated"])
 
-FILE_TRIDSCAN_LASTUPDATED = f"{INSTALL_DIR}/TRIDSCAN_LU"
-DT_TRIDSCAN_LASTUPDATED = get_datetime(FILE_TRIDSCAN_LASTUPDATED)
+TRIDSCAN_DICT = {
+    "name": "TrIDScan",
+    "url": "https://mark0.net/download/tridscan.zip",
+    "command": [sys.executable, f"{INSTALL_DIR}/tridscan.py"],
+    "file_lastupdated": f"{INSTALL_DIR}/TRIDSCAN_LU"
+}
+TRIDSCAN_DICT["dt_lastupdated"] = get_datetime(TRIDSCAN_DICT["file_lastupdated"])
 
-FILE_TRIDDEFSPACK_LASTUPDATED = f"{INSTALL_DIR}/TRIDDEFSPACK_LU"
-DT_TRIDDEFSPACK_LASTUPDATED = get_datetime(FILE_TRIDDEFSPACK_LASTUPDATED)
+TRIDDEFSPACK_DICT = {
+    "name": "TrIDDefsPack",
+    "url": "https://mark0.net/download/triddefspack.zip",
+    "command": [sys.executable, f"{INSTALL_DIR}/triddefspack.py"],
+    "file_lastupdated": f"{INSTALL_DIR}/TRIDDEFSPACK_LU"
+}
+TRIDDEFSPACK_DICT["dt_lastupdated"] = get_datetime(TRIDDEFSPACK_DICT["file_lastupdated"])
 
 
 # https://stackoverflow.com/a/3041990
@@ -136,85 +144,83 @@ def update_trid_defs():
     if not os.path.exists(f"{INSTALL_DIR}/triddefs.trd"):
         # if not, ask trid to install them
         subprocess.call([sys.executable, f"{INSTALL_DIR}/trid.py", "--update"])
+        # write current date to last updated
+        with open(TRIDDEFS_DICT["file_lastupdated"], "w", encoding="utf-8") as f:
+            f.write(DT_NOW.strftime(DT_FORMAT))
     else:
         # check if it's been a few days since an update
-        if (DT_NOW - timedelta(2)) > DT_TRIDDEFS_LASTUPDATED:
+        if (DT_NOW - timedelta(2)) > TRIDDEFS_DICT["dt_lastupdated"]:
             # send HEAD request for when the url was last modified
-            request_trid_defs = requests.head(url=URL_TRID_DEFS, timeout=10)
+            request_trid_defs = requests.head(url=TRIDDEFS_DICT["url"], timeout=10)
             if request_trid_defs.ok:
                 headers = request_trid_defs.headers
                 last_mod = headers["last-modified"]
                 # https://stackoverflow.com/a/71637523
                 dt_triddefs_update = datetime.strptime(last_mod, "%a, %d %b %Y %H:%M:%S %Z")
                 # check date
-                if dt_triddefs_update > DT_TRIDDEFS_LASTUPDATED:
+                if dt_triddefs_update > TRIDDEFS_DICT["dt_lastupdated"]:
                     subprocess.call([sys.executable, f"{INSTALL_DIR}/trid.py", "--update"])
                     # write current date to last updated
-                    with open(FILE_TRIDDEFS_LASTUPDATED, "w", encoding="utf-8") as f:
+                    with open(TRIDDEFS_DICT["file_lastupdated"], "w", encoding="utf-8") as f:
                         f.write(DT_NOW.strftime(DT_FORMAT))
+
+
+def start_program(command, name: str, url_program: str, dt_lastupdated, file_lastupdated):
+    """Attempts to install, update then start the program."""
+    # check if trid is not installed
+    if not os.path.exists(command[1]):
+        if not query(f"Not installed. Do you want to install {name}?"):
+            sys.exit(1)
+
+    # update program
+    update_program(url_program,
+                   dt_lastupdated,
+                   file_lastupdated)
+
+    # if trid, update definitions
+    if name == "TrID":
+        update_trid_defs()
+
+    # run program
+    # remove first argument as it's the command name
+    sys.argv.pop(0)
+    if sys.argv:
+        command.extend(sys.argv)
+    # run!
+    subprocess.call(command)
 
 
 def trid_main():
     """Console script function for trid"""
     # check if trid is not installed
-    if not os.path.exists(COMMAND_TRID[1]):
-        if not query("Not installed. Do you want to install TrID?"):
-            sys.exit(1)
-
-    # TRID PROGRAM
-    update_program(URL_TRID_PROGRAM,
-                   DT_TRID_LASTUPDATED,
-                   FILE_TRID_LASTUPDATED)
-
-    # TRID DEFS
-    update_trid_defs()
-
-    # RUN TRID
-    # remove first argument as it's the command name
-    sys.argv.pop(0)
-    if sys.argv:
-        COMMAND_TRID.extend(sys.argv)
-    # run!
-    subprocess.call(COMMAND_TRID)
+    start_program(
+        TRID_DICT["command"],
+        TRID_DICT["name"],
+        TRID_DICT["url"],
+        TRID_DICT["dt_lastupdated"],
+        TRID_DICT["file_lastupdated"]
+    )
 
 
 def tridscan_main():
     """Console script function for tridscan"""
     # check if tridscan is not installed
-    if not os.path.exists(COMMAND_TRIDSCAN[1]):
-        if not query("Not installed. Do you want to install TrIDScan?"):
-            sys.exit(1)
-
-    # TRIDSCAN
-    update_program(URL_TRIDSCAN,
-                   DT_TRIDSCAN_LASTUPDATED,
-                   FILE_TRIDSCAN_LASTUPDATED)
-
-    # RUN TRIDSCAN
-    # remove first argument as it's the command name
-    sys.argv.pop(0)
-    if sys.argv:
-        COMMAND_TRIDSCAN.extend(sys.argv)
-    # run!
-    subprocess.call(COMMAND_TRIDSCAN)
+    start_program(
+        TRIDSCAN_DICT["command"],
+        TRIDSCAN_DICT["name"],
+        TRIDSCAN_DICT["url"],
+        TRIDSCAN_DICT["dt_lastupdated"],
+        TRIDSCAN_DICT["file_lastupdated"]
+    )
 
 
 def triddefspack_main():
     """Console script function for triddefspack"""
     # check if triddefspack is installed
-    if not os.path.exists(COMMAND_TRIDDEFSPACK[1]):
-        if not query("Not installed. Do you want to install TrIDDefsPack?"):
-            sys.exit(1)
-
-    # TRIDDEFSPACK
-    update_program(URL_TRIDDEFSPACK,
-                   DT_TRIDDEFSPACK_LASTUPDATED,
-                   FILE_TRIDDEFSPACK_LASTUPDATED)
-
-    # RUN TRIDDEFSPACK
-    # remove first argument as it's the command name
-    sys.argv.pop(0)
-    if sys.argv:
-        COMMAND_TRIDSCAN.extend(sys.argv)
-    # run!
-    subprocess.call(COMMAND_TRIDDEFSPACK)
+    start_program(
+        TRIDDEFSPACK_DICT["command"],
+        TRIDDEFSPACK_DICT["name"],
+        TRIDDEFSPACK_DICT["url"],
+        TRIDDEFSPACK_DICT["dt_lastupdated"],
+        TRIDDEFSPACK_DICT["file_lastupdated"]
+    )
