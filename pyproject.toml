@@ -43,7 +43,9 @@ classifiers = [
 stringzilla = ["stringzilla"]
 
 [project.scripts]
-trid = "tridirt.__main__:main"
+trid = "tridirt.__main__:trid_main"
+tridscan = "tridirt.__main__:tridscan_main"
+triddefspack = "tridirt.__main__:triddefspack_main"
 
 [tool.hatch.version]
 source = "versioningit"
