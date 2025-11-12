@@ -69,9 +69,8 @@ def get_trid():
         zf.extractall(INSTALL_DIR)
 
 
-def main():
-    """Main function for tridirt"""
-    # TRID PROGRAM
+def update_trid():
+    """Checks for TrID program updates"""
     # check if it's been a few days since an update
     if (DT_NOW - timedelta(7)) > DT_TRID_LASTUPDATED:
         # send HEAD request for when the url was last modified
@@ -88,7 +87,9 @@ def main():
                 with open(FILE_TRID_LASTUPDATED, "w", encoding="utf-8") as f:
                     f.write(DT_NOW.strftime(DT_FORMAT))
 
-    # TRID DEFS
+
+def update_trid_defs():
+    """Checks for TrID definition updates"""
     # check if defs are installed
     if not os.path.exists(f"{INSTALL_DIR}/triddefs.trd"):
         # if not, ask trid to install them
@@ -109,6 +110,15 @@ def main():
                     # write current date to last updated
                     with open(FILE_TRIDDEFS_LASTUPDATED, "w", encoding="utf-8") as f:
                         f.write(DT_NOW.strftime(DT_FORMAT))
+
+
+def main():
+    """Main function for tridirt"""
+    # TRID PROGRAM
+    update_trid()
+
+    # TRID DEFS
+    update_trid_defs()
 
     # check to run trid with arguments that the user has given
     # remove first argument as it's the command name
