@@ -117,7 +117,7 @@ def get_program(url: str):
         zf.extractall(INSTALL_DIR)
 
 
-def update_program(url, dt_lastupdated, file_lastupdated):
+def update_program(url, dt_lastupdated, file_lastupdated, first_time_install=False):
     """Checks for program updates"""
     # check if it's been a few days since an update
     if (DT_NOW - timedelta(7)) > dt_lastupdated:
@@ -129,7 +129,10 @@ def update_program(url, dt_lastupdated, file_lastupdated):
             dt_lastmodified = datetime.strptime(headers["last-modified"], "%a, %d %b %Y %H:%M:%S %Z")
             # check date
             if dt_lastmodified > dt_lastupdated:
-                print("New version is available!")
+                if first_time_install:
+                    pass
+                elif not query("New version is available! Would you like to update?"):
+                    return
                 print(f"Downloading {url}...")
                 get_program(url)
                 # write current date to last updated
@@ -166,15 +169,19 @@ def update_trid_defs():
 
 def start_program(command, name: str, url_program: str, dt_lastupdated, file_lastupdated):
     """Attempts to install, update then start the program."""
-    # check if trid is not installed
+    # check if program is not installed
+    first_time_install = False
     if not os.path.exists(command[1]):
-        if not query(f"Not installed. Do you want to install {name}?"):
+        do_install = query(f"Not installed. Do you want to install {name}?")
+        if not do_install:
             sys.exit(1)
+        first_time_install = True
 
     # update program
     update_program(url_program,
                    dt_lastupdated,
-                   file_lastupdated)
+                   file_lastupdated,
+                   first_time_install)
 
     # if trid, update definitions
     if name == "TrID":
