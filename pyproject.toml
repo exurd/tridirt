@@ -12,7 +12,7 @@ authors = [
     { name="exurd", email="7785022+exurd@users.noreply.github.com" },
 ]
 keywords = ["trid", "file", "launcher", "file identifier", "file formats"]
-description = "Install, launch and automatically update TrID, the file identifier."
+description = "A launcher for Python versions of TrID, the file identifier."
 dynamic = ["version"]
 dependencies = [
   "tqdm",
