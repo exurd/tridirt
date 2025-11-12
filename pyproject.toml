@@ -1,0 +1,58 @@
+[build-system]
+requires = [
+    "hatchling",
+    "versioningit"
+]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "tridme"
+authors = [
+    { name="exurd", email="7785022+exurd@users.noreply.github.com" },
+]
+keywords = ["trid", "file", "launcher", "file identifier", "file formats"]
+description = "Install, launch and automatically update TrID, the file identifier."
+dynamic = ["version"]
+dependencies = [
+  "tqdm",
+  "requests"
+]
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+# requires-python = ">=3.9"  # TODO: get it to support python 3.6+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Information Technology",
+    # "Operating System :: Microsoft :: Windows",  # untested
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: File Formats",
+    "Topic :: System",
+    "Topic :: Utilities"
+]
+
+[project.optional-dependencies]
+# TrID supports stringzilla
+stringzilla = ["stringzilla"]
+
+[project.scripts]
+trid = "tridme.__main__:main"
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/tridme/**"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/tridme/**"]
