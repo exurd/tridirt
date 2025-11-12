@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 
 
 [project]
-name = "tridme"
+name = "tridirt"
 authors = [
     { name="exurd", email="7785022+exurd@users.noreply.github.com" },
 ]
@@ -43,7 +43,7 @@ classifiers = [
 stringzilla = ["stringzilla"]
 
 [project.scripts]
-trid = "tridme.__main__:main"
+trid = "tridirt.__main__:main"
 
 [tool.hatch.version]
 source = "versioningit"
@@ -52,7 +52,7 @@ source = "versioningit"
 sources = ["src"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/tridme/**"]
+include = ["src/tridirt/**"]
 
 [tool.hatch.build.targets.wheel]
-include = ["src/tridme/**"]
+include = ["src/tridirt/**"]
