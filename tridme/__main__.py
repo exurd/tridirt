@@ -21,16 +21,17 @@ DT_NOW = datetime.now()
 DT_FORMAT = "%m-%d-%Y %H:%M:%S"
 
 
-# make install directory
+# create the install directory
 if not os.path.exists(INSTALL_DIR):
     os.makedirs(INSTALL_DIR)
 
 
 # init datetime variables
 def get_datetime(filename):
-    dt = datetime(1,1,1)
+    """Gets the datetime from a filename."""
+    dt = datetime(1, 1, 1)  # default to use if it fails
     if os.path.exists(filename) and os.path.getsize(filename) != 0:
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             f.seek(0)
             dt = datetime.strptime(f.read(), DT_FORMAT)
     return dt
@@ -43,13 +44,14 @@ FILE_TRIDDEFS_LASTUPDATED = f"{INSTALL_DIR}/TRID_DEFS_LU"
 DT_TRIDDEFS_LASTUPDATED = get_datetime(FILE_TRIDDEFS_LASTUPDATED)
 
 
-def get_trid(url:str):
-    filename = url.split("/")[-1]
+def get_trid():
+    """Downloads trid from the url."""
+    filename = URL_TRID_PROGRAM.rsplit('/', maxsplit=1)[-1]
     filepath = f"{INSTALL_DIR}/{filename}"
 
     # https://stackoverflow.com/a/37573701
     # Streaming, so we can iterate over the response.
-    response = requests.get(url, stream=True)
+    response = requests.get(URL_TRID_PROGRAM, stream=True, timeout=10)
     # Sizes in bytes.
     total_size = int(response.headers.get("content-length", 0))
     block_size = 1024
@@ -63,16 +65,17 @@ def get_trid(url:str):
         raise RuntimeError("Could not download file")
 
     # now extract the zip file
-    with ZipFile(filepath, "r") as zip:
-        zip.extractall(INSTALL_DIR)
+    with ZipFile(filepath, "r") as zf:
+        zf.extractall(INSTALL_DIR)
 
 
 def main():
+    """Main function for tridirt"""
     # TRID PROGRAM
     # check if it's been a few days since an update
     if (DT_NOW - timedelta(7)) > DT_TRID_LASTUPDATED:
         # send HEAD request for when the url was last modified
-        request_trid_program = requests.head(url=URL_TRID_PROGRAM)
+        request_trid_program = requests.head(url=URL_TRID_PROGRAM, timeout=10)
         if request_trid_program.ok:
             headers = request_trid_program.headers
             # https://stackoverflow.com/a/71637523
@@ -80,9 +83,9 @@ def main():
             # check date
             if dt_trid_update > DT_TRID_LASTUPDATED:
                 print("Updating TrID...")
-                get_trid(URL_TRID_PROGRAM)
+                get_trid()
                 # write current date to last updated
-                with open(FILE_TRID_LASTUPDATED, "w") as f:
+                with open(FILE_TRID_LASTUPDATED, "w", encoding="utf-8") as f:
                     f.write(DT_NOW.strftime(DT_FORMAT))
 
     # TRID DEFS
@@ -94,16 +97,17 @@ def main():
         # check if it's been a few days since an update
         if (DT_NOW - timedelta(2)) > DT_TRIDDEFS_LASTUPDATED:
             # send HEAD request for when the url was last modified
-            request_trid_defs = requests.head(url=URL_TRID_DEFS)
+            request_trid_defs = requests.head(url=URL_TRID_DEFS, timeout=10)
             if request_trid_defs.ok:
                 headers = request_trid_defs.headers
+                last_mod = headers["last-modified"]
                 # https://stackoverflow.com/a/71637523
-                dt_triddefs_update = datetime.strptime(headers["last-modified"], "%a, %d %b %Y %H:%M:%S %Z")
+                dt_triddefs_update = datetime.strptime(last_mod, "%a, %d %b %Y %H:%M:%S %Z")
                 # check date
                 if dt_triddefs_update > DT_TRIDDEFS_LASTUPDATED:
                     subprocess.call([sys.executable, f"{INSTALL_DIR}/trid.py", "--update"])
                     # write current date to last updated
-                    with open(FILE_TRIDDEFS_LASTUPDATED, "w") as f:
+                    with open(FILE_TRIDDEFS_LASTUPDATED, "w", encoding="utf-8") as f:
                         f.write(DT_NOW.strftime(DT_FORMAT))
 
     # check to run trid with arguments that the user has given
