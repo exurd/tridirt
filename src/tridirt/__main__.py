@@ -147,7 +147,14 @@ def is_new_modified_date(url, dt_lastupdated, time_delta=7) -> bool:
 
 
 def update_program(url, dt_lastupdated, file_lastupdated, first_time_install=False):
-    """Checks for program updates"""
+    """
+    Checks for program updates.
+
+    url: The URL of the program.
+    dt_lastupdated: The datetime of when it was last updated.
+    file_lastupdated: Where to save the datetime if an update occurs.
+    first_time_install: Skip asking to update if first time installing.
+    """
     if is_new_modified_date(url, dt_lastupdated):
         if first_time_install:
             pass
@@ -177,8 +184,16 @@ def update_trid_defs():
                 f.write(DT_NOW.strftime(DT_FORMAT))
 
 
-def start_program(command, name: str, url_program: str, dt_lastupdated, file_lastupdated):
-    """Attempts to install, update then start the program."""
+def start_program(command: list, name: str, url_program: str, dt_lastupdated, file_lastupdated):
+    """
+    Attempts to install, update then start the program.
+    
+    command: The command to run.
+    name: The name of the program.
+    url_program: The URL for the program.
+    dt_lastupdated: The datetime of when it was last updated.
+    file_lastupdated: Where to save the datetime if an update occurs.
+    """
     # check if program is not installed
     first_time_install = False
     if not os.path.exists(command[1]):
