@@ -27,10 +27,13 @@ DT_FORMAT = "%m-%d-%Y %H:%M:%S"
 def get_datetime(filename):
     """Gets the datetime from a filename."""
     dt = datetime(1, 1, 1)  # default to use if it fails
-    if os.path.exists(filename) and os.path.getsize(filename) != 0:
-        with open(filename, "r", encoding="utf-8") as f:
-            f.seek(0)
-            dt = datetime.strptime(f.read(), DT_FORMAT)
+    try:
+        if os.path.exists(filename) and os.path.getsize(filename) != 0:
+            with open(filename, "r", encoding="utf-8") as f:
+                f.seek(0)
+                dt = datetime.strptime(f.read(), DT_FORMAT)
+    except ValueError:
+        print(f"Could not get datetime from {filename}")
     return dt
 
 
