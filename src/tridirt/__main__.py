@@ -125,27 +125,39 @@ def get_program(url: str):
         zf.extractall(INSTALL_DIR)
 
 
-def update_program(url, dt_lastupdated, file_lastupdated, first_time_install=False):
-    """Checks for program updates"""
-    # check if it's been a few days since an update
-    if (DT_NOW - timedelta(7)) > dt_lastupdated:
+def is_new_modified_date(url, dt_lastupdated, time_delta=7) -> bool:
+    """
+    Checks if the modified date of the url is newer than the last updated.
+    
+    url: The URL you want to check.
+    dt_lastupdated: The datetime of when it was last updated.
+    time_delta: How many days to wait for (default is 7).
+    """
+    if (DT_NOW - timedelta(time_delta)) > dt_lastupdated:
         # send HEAD request for when the url was last modified
-        request_program = requests.head(url, timeout=10)
-        if request_program.ok:
-            headers = request_program.headers
+        request_url = requests.head(url, timeout=10)
+        if request_url.ok:
+            headers = request_url.headers
             # https://stackoverflow.com/a/71637523
             dt_lastmodified = datetime.strptime(headers["last-modified"], "%a, %d %b %Y %H:%M:%S %Z")
             # check date
             if dt_lastmodified > dt_lastupdated:
-                if first_time_install:
-                    pass
-                elif not query("New version is available! Would you like to update?"):
-                    return
-                print(f"Downloading {url}...")
-                get_program(url)
-                # write current date to last updated
-                with open(file_lastupdated, "w", encoding="utf-8") as f:
-                    f.write(DT_NOW.strftime(DT_FORMAT))
+                return True
+    return False
+
+
+def update_program(url, dt_lastupdated, file_lastupdated, first_time_install=False):
+    """Checks for program updates"""
+    if is_new_modified_date(url, dt_lastupdated):
+        if first_time_install:
+            pass
+        elif not query("New version is available! Would you like to update?"):
+            return
+        print(f"Downloading {url}...")
+        get_program(url)
+        # write current date to last updated
+        with open(file_lastupdated, "w", encoding="utf-8") as f:
+            f.write(DT_NOW.strftime(DT_FORMAT))
 
 
 def update_trid_defs():
@@ -158,21 +170,11 @@ def update_trid_defs():
         with open(TRIDDEFS_DICT["file_lastupdated"], "w", encoding="utf-8") as f:
             f.write(DT_NOW.strftime(DT_FORMAT))
     else:
-        # check if it's been a few days since an update
-        if (DT_NOW - timedelta(2)) > TRIDDEFS_DICT["dt_lastupdated"]:
-            # send HEAD request for when the url was last modified
-            request_trid_defs = requests.head(url=TRIDDEFS_DICT["url"], timeout=10)
-            if request_trid_defs.ok:
-                headers = request_trid_defs.headers
-                last_mod = headers["last-modified"]
-                # https://stackoverflow.com/a/71637523
-                dt_triddefs_update = datetime.strptime(last_mod, "%a, %d %b %Y %H:%M:%S %Z")
-                # check date
-                if dt_triddefs_update > TRIDDEFS_DICT["dt_lastupdated"]:
-                    subprocess.call([sys.executable, f"{INSTALL_DIR}/trid.py", "--update"])
-                    # write current date to last updated
-                    with open(TRIDDEFS_DICT["file_lastupdated"], "w", encoding="utf-8") as f:
-                        f.write(DT_NOW.strftime(DT_FORMAT))
+        if is_new_modified_date(TRIDDEFS_DICT["url"], TRIDDEFS_DICT["dt_lastupdated"], 2):  # 2 days
+            subprocess.call([sys.executable, f"{INSTALL_DIR}/trid.py", "--update"])
+            # write current date to last updated
+            with open(TRIDDEFS_DICT["file_lastupdated"], "w", encoding="utf-8") as f:
+                f.write(DT_NOW.strftime(DT_FORMAT))
 
 
 def start_program(command, name: str, url_program: str, dt_lastupdated, file_lastupdated):
